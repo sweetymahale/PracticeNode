@@ -1,0 +1,73 @@
+<?php
+
+include_once '../core/login.phi'; 
+include_once './assignment/helper.phi';
+
+
+function content_head($hash)
+{
+
+  if(isset($_GET['log']) && $_GET['log']=="off")
+  {
+     destroyAllCookies();
+     doRedirect('/my/login');
+  }
+  if(!userLoggedInLite())
+  {
+    doRedirect('/my/login');
+  }
+
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+  if(!isPagePermitted('assignment', $role))
+  {
+    doRedirect('/my/home');
+  }
+
+// echo '<link href="/view/common/calendar.css" type="text/css" rel="stylesheet" />';
+  echo '<link href="/view/common/datepicker/jquery-ui-1.8.11.custom.css" type="text/css" rel="stylesheet" />';
+  echo '<link href="/view/assignment/style.css?ver=3" type="text/css" rel="stylesheet" />';
+  //return 0;
+}
+
+function content_body($hash)
+{
+  set_menu();
+  showContent($hash);
+
+}
+
+function content_tail($hash)
+{
+ include_jq();
+ echo "<script type=\"text/javascript\" src=\"/view/common/jquery.blockUI.js\"></script>\n";
+ echo "<script>	$(document).ajaxStart($.blockUI).ajaxStop($.unblockUI);	</script>  \n";
+ echo "<script type=\"text/javascript\" src=\"/view/common/datepicker/jquery-ui-1.8.11.custom.min.js\"></script>\n";
+?>
+<script>
+      $(function() {
+        $( "#datepicker" ).datepicker({
+          showOn: "both",
+          dateFormat: 'dd-M-yy',
+          buttonImage: "/images/iconCalendar.gif",
+          buttonImageOnly: true
+        });
+    });
+  </script>
+  <?php
+  echo "<script type=\"text/javascript\" src=\"/view/common/common.js?var=0\"></script>\n";
+  echo "<script type=\"text/javascript\" src=\"/ckeditor/ckeditor.js\"></script>\n";
+  echo "<script type=\"text/javascript\" src=\"/view/common/initCkeditor.js\"></script>\n";
+  //echo "<script type=\"text/javascript\" src=\"/ckeditor/adapters/ckeditor.js\"></script>\n";
+
+  echo "<script type=\"text/javascript\" src=\"/view/assignment/formSubmit.js?ver=6\"></script>\n";
+
+  echo "<script>
+    initEditor_note('message', 1);
+  </script>";
+  echo "<script type=\"text/javascript\" src=\"/view/common/safarifix.js?ver=1\"></script>\n";
+}
+
+
+
+?>

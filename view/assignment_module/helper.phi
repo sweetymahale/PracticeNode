@@ -1,0 +1,1395 @@
+<?php
+include_once '../core/mySqlFunctions.phi';  
+include_once '../core/uploadAttachment.phi';
+ 
+
+function showContent($hash)
+{
+  $link = mySqlConnect("SLAVE");
+  $seq = get_context('seq');
+  $role=getUserRole($seq);
+  echo "<div id=\"body\">
+                <div class=\"web_text\" id=\"enq_col_1\">
+                    <div class=\"e_menu\">
+                      <ul class=\"menu_a\">
+                         <li>
+                          <div align=\"left\"><a href=\"sent_assignments\" >Assignments History</a></div>
+                        </li>";
+                        if(isPagePermitted("assignment",$role))
+                        {
+                          echo "
+                          <li>
+                            <div align=\"left\"><a href=\"assignment\"  class=\"select\" >Create Assignment</a></div>
+                          </li>";
+                        }
+            echo "   </ul>
+                    </div>
+                </div>";
+
+  echo "	<div id=\"processEntry\" >";
+  echo '
+         					<div id="enq_col_2">
+            				<div class="Blue_lbl" id="enq_page_name"><div class="leftFloat">New Assignment</div>'.showHelpDiv('9Skr88NqqKc').'</div>';
+                    if(isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))
+                    {
+                       $assignment_rec_seq = $_GET['ass'];
+                       $get_assDetail = "MYSQL QUERY TO GET DATA FROM ASSIGNMENT RECORD";
+                       $res_assDetail = mysqlQuery($link, $get_assDetail, $assignment_rec_seq);
+                       $row_assDetail = mysql_fetch_array($res_assDetail);
+                       $num_ass = mysql_num_rows($res_assDetail);
+                       if($num_ass == 0)
+                       {
+                          echo "<script> alert('Assignment cannot be edited, it has been approved or cancelled'); window.top.location = '/my/sent_assignments'; </script>";
+                       }
+                    }
+                    else
+                    {
+                       $row_assDetail = '';
+                    }
+  echo '
+             				<form action="/my/assignment/processRequest" id="assignment_form" method="post" enctype="multipart/form-data" target="my_iframe" >';
+                        display_popup();
+                        displaySelector($row_assDetail);
+                        displayEntryDetails($row_assDetail);
+            echo '   </form>    ';
+  echo '
+           					<iframe name="my_iframe" id="my_iframe" src="#" style="display:none;" target="_parent" width="0" height="0">
+            				</iframe>';
+  echo '		</div>
+             		</div>';
+  echo "</div>";
+}
+
+function displayContent()
+{
+  echo '<div class="Blue_lbl" id="enq_page_name">Create New Assignment'.showHelpDiv('9Skr88NqqKc').'</div>';
+  displaySelector();
+  displayEntryDetails();
+}
+function display_popup()
+{
+  ?>
+<div id="sms_receiver_list"
+	style="display: none; float: left; margin-left: 12px; margin-top: 3px; margin-right: 50px; z-index: 1000;">
+	<div id="facebox1"
+		style="display: ; border: solid 6px #dddddd; background: white; z-index: 1000;">
+		<div class="popup">
+			<table>
+				<tbody>
+					<tr>
+						<td class="tl" />
+						<td class="b" />
+						<td class="tr" />
+					</tr>
+					<tr>
+						<td class="b" />
+						<td class="body">
+							<div class="content" id="popup_content">'; //receiver_list();
+
+								echo '</div>
+							<div class="footer">
+								<a href="#" class="close" id="close_div" style="float: right;">
+									<img src="../images/closelabel.gif" border="0" title="close"
+									onclick="processClodeDiv();return false;" class="close_image" />
+								</a>
+							</div>
+						</td>
+						<td class="b" />
+					</tr>
+					<tr>
+						<td class="bl" />
+						<td class="b" />
+						<td class="br" />
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+  <?php
+}
+
+function displaySelector($row_assDetail = '')
+{
+
+ if(isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))
+ {
+    $subject_seq       = $row_assDetail['subject_seq'];
+    $b_seq             = $row_assDetail['board_seq'];
+    $st_seq            = $row_assDetail['stream_seq'];
+    $cl_seq            = $row_assDetail['class_seq'];
+    $sec_seq           = $row_assDetail['section_seq'];
+ }
+ else
+ {
+    $b_seq = '';
+    $st_seq = '';
+    $cl_seq = '';
+    $sec_seq = '';
+    $subject_seq = '';
+ }
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+  $link = mySqlConnect("SLAVE");
+
+    $select_board = "MYSQL QUERY";
+    $res_board = mysql_query($select_board,$link);
+    $select_stream = "MYSQL QUERY";
+    $res_stream = mysql_query($select_stream,$link);
+    $select_query = "MYSQL QUERY";
+    $res = mysql_query($select_query,$link);
+    echo '
+        <div id="com_page_all">
+           <input type="hidden" name="subject_seq" id="subject_seq" value="'.$subject_seq.'" >
+           <input type="hidden" name="sec_seq" id="sec_seq" value="'.$sec_seq.'" >
+           <table width="761" height="50" border="0" cellpadding="6" cellspacing="0">
+              <tr>
+                <td width="150">
+                    <span class="web_text_gray12">Board :</span>
+                    <span class="web_text_gray12">
+                      <select name="board" id="board" class="textfild_2" onchange="processSection(\'standard\',\'section\',\'board\',\'stream\',\''.$sec_seq.'\');processSubject(\'standard\',\'subject\',\'board\',\'stream\',\''.$subject_seq.'\');return false;"
+                      style="width:115px;">
+                         <option value="0" selected="selected">Select Board</option>';
+                          while($row_board = mysql_fetch_array($res_board))
+                          {
+                            $board_seq = $row_board['board_seq'];
+                            $board_name = strtoupper($row_board['board_name']);
+                            $selected = ($board_seq == $b_seq)?'selected':''; 
+                            echo '
+                            <option value="'.$board_seq.'"'.$selected.'>'.$board_name.'</option>';
+                          }
+          echo '
+                      </select>
+                    </span>
+                </td>
+                <td width="180">
+                  <span class="web_text_gray12">Stream :</span>
+                  <span class="web_text_gray_bold">
+                      <select name="stream" id="stream" class="textfild_2" onchange="processSection(\'standard\',\'section\',\'board\',\'stream\',\''.$sec_seq.'\');processSubject(\'standard\',\'subject\',\'board\',\'stream\',\''.$subject_seq.'\');return false;"
+                      style="width:115px;">
+                      <option value="0" selected="selected">Select Stream</option>';
+
+                      while($row=mysql_fetch_array($res_stream))
+                      {
+                        $stream_seq=$row['stream_seq'];
+                        $stream_name=ucwords($row['stream_name']);
+                        $selected = ($stream_seq == $st_seq)?'selected="selected"':'';
+                        echo '
+                        <option value="'.$stream_seq.'"'.$selected.'>'.$stream_name.'</option>';
+                      }
+    echo '
+                  </select>
+                  </span>
+              </td>
+              <td width="171">
+                    <span class="web_text_gray12">Class :</span>
+                      <select name="standard" id="standard" class="textfild_2" onchange="processSection(\'standard\',\'section\',\'board\',\'stream\',\''.$sec_seq.'\');processSubject(\'standard\',\'subject\',\'board\',\'stream\',\''.$subject_seq.'\');return false;"
+                      style="width:115px;">
+                         <option value="0" selected="selected">Select Class</option>';
+                          while($row=mysql_fetch_array($res))
+                          {
+                            $class_seq=$row['class_seq'];
+                            $class_name=$row['class_name'];
+                            $selected = ($class_seq == $cl_seq)?'selected':'';
+                            echo '
+                            <option value="'.$class_seq.'"'.$selected.'>'.$class_name.'</option>';
+                          }
+                  echo '
+                     </select>
+               </td>
+              <td width="180" class="web_text_gray12">
+                  Section :
+                  <select name="section" id="section" onchange="processSubject(\'standard\',\'subject\',\'board\',\'stream\',\''.$subject_seq.'\');return false;" class="textfild_2"
+                  style="width:115px;">
+                   <option value="0" selected="selected">Select Section</option>
+                   <option value="0" selected="selected">All</option>
+                </select>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="2">
+                <span class="web_text_gray12">Subject :</span>
+                 <select name="subject" id="subject" class="textfild_2" >
+                       <option value="0" selected="selected">Select Subject</option>
+                  </select>
+              </td>
+              <td colspan="2"></td>
+
+          </tr>
+    </table>
+       </div>';
+
+}
+
+function displayEntryDetails($row_assDetail = '')
+{
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+  $link = mySqlConnect("SLAVE");
+
+   if(isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))
+   {
+      $assignment_rec_seq = $row_assDetail['assignment_rec_seq'];
+      $senderSeq      = $row_assDetail['sender_seq'];
+      $create_time    = date("d-M-Y",strtotime($row_assDetail['create_time']));
+      $due_date       = formatDate($row_assDetail['due_date'], 'd-M-Y');
+                        //date("m/d/Y",strtotime($row_assDetail['due_date']));
+      $notes          = str_replace("\\r\\n",'', $row_assDetail['message']);
+      $subject        = $row_assDetail['subject'];
+      $senderRole     = getUserRole($senderSeq);
+      $attachment_link = $row_assDetail['attachment_link'];
+      $next_cmd = 'update';
+   }
+   else
+   {
+      $assignment_rec_seq = '';
+      $senderSeq = '';
+      $due_date = '';
+      $notes = '';
+      $subject = '';
+      $senderRole = '';
+      $attachment_link = '';
+      $next_cmd = 'insert';
+   }
+
+    $name = "";
+    if($role == TEACHER_ROLE)
+    {
+      $name = getTeacherName($seq);
+    }
+    else
+    {
+      $name = getAdminName($seq);
+    }
+
+    if($senderRole == TEACHER_ROLE)
+    {
+      $senderName = getTeacherName($senderSeq);
+    }
+    else if($senderRole != '')
+    {
+      $senderName = getAdminName($senderSeq);
+    }
+    else
+    {
+      $senderName = '';
+    }
+
+    $name =  (isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))?$senderName:$name;
+    $current_date = date("m/d/Y");
+    echo '
+       <div id="main_assignment_display_1">
+          <input type="hidden" name="selected_stud_seq_str" id="selected_stud_seq_str">
+          <input type="hidden" name="selected_parent_id" id="selected_parent_id">
+          <input type="hidden" name="next_cmd" id="next_cmd" value="'.$next_cmd.'">
+          <input type="hidden" name="assignment_rec_seq" id="assignment_rec_seq" value="'.$assignment_rec_seq.'">
+          <input type="hidden" name="current_date" id="current_date" value="'.$current_date.'">
+          <table width="835" border="0" cellspacing="0" cellpadding="4">
+            <tr>
+              <td width="80" valign="top" class="web_text_gray_bold">Teacher : </td>';
+          ?>
+              <input
+              	type="hidden" name="sender_seq" id="sender_seq"
+              	value="<?php echo $seq;?>">
+              <td width="" valign="top" class="web_text_gray12"><?php echo $name;?></td>
+                  <?php
+                  echo '
+              <td width="302" valign="top" class="web_text_gray12">&nbsp;</td>
+            </tr>';
+        if(isPagePermitted("assignment-approved",$role))
+        {
+           echo '
+            <tr>
+              <td valign="top" class="web_text_gray_bold" style="padding-bottom:30px;">Notification :</td>
+              <td valign="top" class="web_text_gray12"><input type="checkbox" name="checked_option[]" id="checked_option1"value="S" checked>
+                SMS                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;
+                <input type="checkbox" name="checked_option[]" id="checked_option2" value="E" checked>
+                Email                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="checkbox" name="checked_option[]" id="checked_option3" value="M" checked>
+                Message</td>
+              <td valign="top" class="web_text_gray12">&nbsp;</td>
+            </tr>';
+        }
+    echo '
+            <tr>
+              <td valign="top" class="web_text_gray_bold">Heading :</td>
+              <td valign="top" class="web_text_gray12">
+                <input name="sub" id="sub" type="text" class="textfild_3" size="63" value="'.$subject.'">
+              </td>
+              <td valign="top" class="web_text_gray_bold">Due Date :
+                <input type="text" id="datepicker" name="datepicker" value="'.$due_date.'"> </td>
+
+            </tr>
+            <tr>
+              <td valign="top" class="web_text_gray_bold">Message : </td>
+              <td valign="top" colspan=2><textarea name="message" id="message"  class="textfild_notewrite">'.$notes.'</textarea></td>
+            </tr>
+            <tr >
+              <td valign="top" class="web_text_gray_bold">Attachment :</td>
+              <td colspan="2" valign="top"><input name="file" id="file" type="file"
+              	style="background-color: #FFFFFF; border: solid 1px; color: #CCCCCC;"
+              	size="50"> <a href="#" class="web_text_gray12"
+              	onclick="processAddRow();return false;">+ Add More Files </a>
+              </td>
+            </tr>';
+            $prevAttachmentLink = '';
+            if(isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))
+            {
+              echo '
+               <tr>
+                  <td valign="top" class="web_text_gray_bold"></td>
+                  <td colspan="2" valign="top">';
+                      $prevAttachmentLink = $attachment_link;
+                      if($attachment_link != "")
+                      {
+                        $attachmentArr = explode('|', $attachment_link);
+                        foreach($attachmentArr as $aLink)
+                        {
+                          $id = explode('/', $aLink);
+                          $cnt = count($id);
+                          if(count($id)>1)
+                          {
+                            $key_id = $id[1];
+                          }
+                          $pos1 = strpos($aLink, '?')+1;
+                          $attachment_href = $aLink."&skey=".getSessionKey($key_id);
+                          $attachment_name = substr($aLink, $pos1);
+                          $fileIcon = "<img src='".getAttachmentIcon($attachment_name)."' border=0 />";
+                          echo "<br/><span style='font-weight:bold'><a href='$attachment_href'>$fileIcon $attachment_name</a></span> &nbsp;&nbsp;
+                                <a href='#' class='web_text_gray12' onclick='processRemoveAttachment(\"$assignment_rec_seq\", \"$attachment_link\", \"$aLink\");return false;'>- Remove </a>";
+                        }
+                      }
+                      else
+                      {
+                         echo "No file";
+                      }
+                  echo '
+                  </td>
+               </tr>';
+
+               if(isPagePermitted("assignment-approved",$role))
+               {
+                  echo '
+                   <tr>
+                      <td valign="top" colspan="2" class="web_text_gray_bold">Send SMS to teacher for discussion (160 characters only)</td>
+                   </tr>
+                   <tr>
+                      <td valign="top" class="web_text_gray_bold"></td>
+                      <td valign="top" colspan="2">
+                          <input name="message_text" id="message_text" type="text" style="width:350px;" maxlength="160" >
+                          <input type="button" name="smsToTeacher" id="smsToTeacher" class="button_1" value="Send SMS" title="Send SMS to teacher for discussion"
+                           onclick="processSmsToTeacher(\''.$senderSeq.'\');return false;">
+                      </td>
+                    </tr>';
+               }
+            }
+
+           echo'
+            <tr id="tr_last">
+              <td valign="top" class="web_text_gray_bold">&nbsp;</td>
+              <td valign="bottom">';
+                if(isPagePermitted("assignment-approved",$role))
+                {
+                 echo '
+                  <input type="hidden" name="formName" id="formName" value="approvedForm">
+                  <span class="web_text_red_s11">Note</span> : If you find everything alright, please click on the button below. <br><br>
+                  <input name="send" type="button" onclick="processAssignment();return false;" class="button_2_big" value="Preview Receiver\'s List to Approve">';
+                  if(isset($_GET['cmd']) && $_GET['cmd']=='edit' && isset($_GET['ass']))
+                    echo '&nbsp;&nbsp;&nbsp;<input name="send1" type="button" onclick="processCancelAssignment();return false;" class="button_1_n" value="Cancel Assignment">';
+                }
+                else if(isPagePermitted("assignment-pending",$role))
+                {
+                  $isEdit = (isset($_GET['cmd']) && $_GET['cmd']=='edit')?1:0;
+                  $assSeq = (isset($_GET['ass']))?$_GET['ass']:'';
+                  echo '
+                  <input type="hidden" name="formName" id="formName" value="approvalForm">
+                  <input type="hidden" name="isEdit" id="isEdit" value="'.$isEdit.'">
+                  <input type="hidden" name="assSeq" id="assSeq" value="'.$assSeq.'">
+                  <input type="hidden" name="prevAttachmentLink" id="prevAttachmentLink" value="'.$prevAttachmentLink.'">
+                  <input name="send" type="button" onclick="processAssApproval();return false;" class="button_1_big" value="Send For Approval ">';
+                }
+
+             echo '
+              </td>
+              <td valign="top"></td>
+            </tr>
+          </table>
+      </div>
+      ';
+}
+
+function appendSection()
+{
+  $link = mySqlConnect("SLAVE");
+
+    $std = $_POST['std'];
+    $board_seq = $_POST['board_seq'];
+    $stream_seq = $_POST['stream_seq'];
+    $sec_seq = $_POST['sec_seq'];
+    $select_section = "MYSQL QUERY";
+    $res_section = mysqlQuery($link, $select_section, $std, $board_seq, $stream_seq);
+
+    while($row_section = mysql_fetch_array($res_section))
+    {
+      $s_seq = $row_section['section_seq'];
+      $section_name = $row_section['section_name'];
+      $selected = ($s_seq == $sec_seq)?'selected="selected"':'';
+
+      echo '
+      <option value="'.$s_seq.'"'.$selected.'>'.$section_name.'</option>';
+    }
+}
+
+function appendSubject($std, $board_seq, $stream_seq, $subject_seq)
+{
+  $link = mySqlConnect("SLAVE");
+    // $query="SELECT sub_seq,sub_nm FROM subject_rec WHERE class_seq='$std' and section_seq='$section'";
+    $query="MYSQL QUERY";
+    //  echo $query;
+    $res=mysql_query($query,$link);
+    while($row=mysql_fetch_array($res))
+    {
+      $sub_seq=$row['sub_seq'];
+      $sub_nm=$row['sub_nm'];
+      $subject_name=ucwords($sub_nm);
+      $selected = ($sub_seq == $subject_seq)?'selected="selected"':'';
+
+      echo '
+        <option value="'.$sub_seq.'"'.$selected.'>'.$subject_name.'</option>';
+    }
+}
+
+function cancelAssignment()
+{
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+  if(!isPagePermitted("assignment-approved",$role)) return;
+
+  $link = mySqlConnect('MASTER');
+  $ass_rec_seq = $_POST['ass_seq'];
+
+  $query = "MYSQL UPDATE QUERY ";
+  $res = mysqlQuery($link, $query, $seq, $ass_rec_seq);
+}
+
+function send_assignment(&$error = '')
+{
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+  if(!isPagePermitted("assignment-approved",$role)) return;
+
+  $link = mySqlConnect('MASTER');
+
+    $ret = upload_attachment_files($error, get_context('seq'));
+    if($error != '')
+    {
+      return false;
+    }
+
+    if(count($ret) > 0)
+    $ret_str = implode("|",$ret);
+    else
+    $ret_str = '';
+
+    // $selected_parent_arr=array();
+    $next_cmd = mysql_real_escape_string($_POST['next_cmd'], $link);
+    $ass_rec_seq = mysql_real_escape_string($_POST['assignment_rec_seq'], $link);
+    $selected_parent_str = mysql_real_escape_string($_POST['selected_parent_id'], $link);
+    $selected_parent_arr = explode(",",$selected_parent_str);
+    $selected_stud_seq_str = $_POST['selected_stud_seq_str'];
+    $selected_stud_seq_arr = explode(",",$selected_stud_seq_str);
+    $board_seq = mysql_real_escape_string($_POST['board'], $link);
+    $stream_seq = mysql_real_escape_string($_POST['stream'], $link);
+    $std_seq = mysql_real_escape_string($_POST['standard'], $link);
+    $section_seq = mysql_real_escape_string($_POST['section'], $link);
+    $subject_seq = mysql_real_escape_string($_POST['subject'], $link);
+    $sub = mysql_real_escape_string(ucfirst($_POST['sub']), $link);
+    $message = mysql_real_escape_string($_POST['message'], $link);
+    $sender_seq = mysql_real_escape_string($_POST['sender_seq'], $link);
+    $due_date = mysql_real_escape_string(date("Y-m-d",strtotime($_POST['datepicker'])), $link);
+
+    $selected_option = (isset($_POST['checked_option']))?$_POST['checked_option']:array();
+
+    if($next_cmd == 'insert')
+    {
+        $query = "MYSQL INSERT QUERY";
+        $res = mysql_query($query,$link);
+        $assignment_rec_seq = mysql_insert_id($link);
+       /*
+        $update_query = "UPDATE assignment_rec SET attachment_link='$ret_str' WHERE assignment_rec_seq='$assignment_rec_seq'";
+        $res_update = mysql_query($update_query,$link);*/
+    }
+    else if($next_cmd == 'update')
+    {
+        $get_attachment = "MYSQL QUERY";
+        $res_attachment = mysql_query($get_attachment, $link);
+        $row_attachment = mysql_fetch_array($res_attachment);
+        $a_link = $row_attachment['attachment_link'];
+        $a_link_arr = explode("|",$a_link);
+        $result = array_merge($a_link_arr, $ret);
+         if(count($result) > 0)
+         $result_str = implode("|",$result);
+         else
+         $result_str = '';
+        $query = "MYSQL UPDATE QUERY";
+        $res = mysql_query($query, $link);
+    }
+    else if($next_cmd == 'cancel')
+    {
+        $query = "MYSQL UPDATE QUERY";
+        $res = mysql_query($query, $link);
+    }
+
+    $class_name=getStandardName($std_seq);
+    $select_stud="MYSQL QUERY" ;
+     
+    $res_student=mysql_query($select_stud,$link);
+
+
+    if (in_array("S", $selected_option))
+    {
+      $received_sms_val=save_sms($selected_parent_arr,$class_name,$section_seq);
+    }
+
+    if (in_array("E", $selected_option))
+    {
+      $received_email_val=send_mail($selected_parent_arr,$class_name,$section_seq);
+    }
+
+    if (in_array("M", $selected_option))
+    {
+      $received_message_val=send_message($selected_parent_arr,$class_name,$section_seq);
+    }
+
+  return $selected_option;
+}
+
+function save_sms($selected_parent_arr,$class_name,$section_seq)
+{
+  $link = mySqlConnect('MASTER');
+  $seq = get_context('seq');
+
+    if($section_seq != 0)
+    {
+      $section_name = getSectionName($section_seq);
+    }
+    else
+    {
+      $section_name = "";
+    }
+
+    $class_name = $class_name;
+    $contactArr = array();
+    foreach($selected_parent_arr as $key=>$value)
+    {
+//      $p_seq = getStudentFatherMotherGaurdianSeq($value);
+//      $f_seq = $p_seq[0];
+//      $m_seq = $p_seq[1];
+//      $g_seq = $p_seq[2];
+
+//      $get_contact_no = "SELECT f_contact_no,m_contact_no,g_contact_no FROM parent_rec WHERE parent_seq='$value'";
+//      $res_contact_no = mysql_query($get_contact_no,$link);
+//      $row_contact_no = mysql_fetch_array($res_contact_no);
+//      $f_contact_no = $row_contact_no['f_contact_no'];
+//      $m_contact_no = $row_contact_no['m_contact_no'];
+//      $g_contact_no = $row_contact_no['g_contact_no'];
+//      $father_contact_no = "";
+//      $mother_contact_no = "";
+
+      $get_contact_no = "MYSQL QUERY";
+      $res_contact_no = mysqlQuery($link, $get_contact_no, $value);
+      $row_contact_no = mysql_fetch_array($res_contact_no);
+      $f_seq = $row_contact_no['f_seq'];
+      $m_seq = $row_contact_no['m_seq'];
+      $g_seq = $row_contact_no['g_seq'];
+
+      $father_email = $row_contact_no['f_email'];
+      $mother_email = $row_contact_no['m_email'];
+      $gaurdian_email = $row_contact_no['g_email'];
+
+      $f_contact_no = $row_contact_no['f_contact_no'];
+      $m_contact_no = $row_contact_no['m_contact_no'];
+      $g_contact_no = $row_contact_no['g_contact_no'];
+//      $father_contact_no = $f_contact_no;
+//      $mother_contact_no = $m_contact_no;
+
+      $contact_no = "";
+      if($f_contact_no != "")
+      {
+        $contact_no = $f_contact_no;
+      }
+      else if($m_contact_no != "")
+      {
+        $contact_no = $m_contact_no;
+      }
+      else if($g_contact_no != "")
+      {
+        $contact_no = $g_contact_no;
+      }
+
+      $receiver_info = "P_".$value; //P=>Parent & $value=> Parent seq.
+      $sms_text = "A new assignment has been uploaded for {$class_name} {$section_name}. Please check \"Assignments\" module on School portal - ".SCHOOL_FROM_NAME;
+      $sms_schedule_option = "R";
+      $sent_time = "";
+      $sms_text = mysql_real_escape_string($sms_text, $link);
+      $seq = mysql_real_escape_string($seq, $link);
+      $receiver_info = mysql_real_escape_string($receiver_info, $link);
+      $sms_schedule_option = mysql_real_escape_string($sms_schedule_option, $link);
+      $insert_sms_rec = "MYSQL QUERY";
+      $res_sms_rec = mysql_query($insert_sms_rec,$link);
+      $sms_rec_seq = mysql_insert_id($link);
+
+      $smsInfo = array();
+      $smsInfo['sms_rec_seq'] = $sms_rec_seq;
+      $smsInfo['sms_text'] = $sms_text;
+      $smsInfo['sms_schedule_option'] = $sms_schedule_option;
+      //$smsInfo['phone'] = $contact_no;
+
+      if($f_contact_no != "" && !in_array($f_contact_no, $contactArr))
+      {
+        array_push($contactArr, $f_contact_no);
+        $smsInfo['phone'] = $f_contact_no;
+        sendSms($smsInfo);
+      }
+
+      if($m_contact_no != "" && !in_array($m_contact_no, $contactArr))
+      {
+        array_push($contactArr, $m_contact_no);
+        $smsInfo['phone'] = $m_contact_no;
+        sendSms($smsInfo);
+      }
+
+      if($g_contact_no != "" && !in_array($g_contact_no, $contactArr))
+      {
+        array_push($contactArr, $g_contact_no);
+        $smsInfo['phone'] = $g_contact_no;
+        sendSms($smsInfo);
+      }
+    }
+}
+
+function send_mail($selected_parent_arr,$class_name,$section_seq)
+{
+  $link = mySqlConnect('SLAVE');
+  $i = 1;
+  if($section_seq != 0)
+  {
+    $section_name = ucwords(getSectionName($section_seq));
+  }
+  else
+  {
+    $section_name = "";
+  }
+
+  $class_name = strtoupper($class_name);
+  foreach($selected_parent_arr as $key=>$value)
+  {
+//    $p_seq = getStudentFatherMotherGaurdianSeq($value);
+//    $f_seq = $p_seq[0];
+//    $m_seq = $p_seq[1];
+//    $g_seq = $p_seq[2];
+//
+//    $father_email = getFatherEmail($f_seq);
+//    $mother_email = getMotherEmail($m_seq);
+//    $gaurdian_email = getGaurdianEmail($g_seq);
+      $mailArr = array();
+      $get_contact_no = "MYSQL QUERY";
+      $res_contact_no = mysqlQuery($link, $get_contact_no, $value);
+      $row_contact_no = mysql_fetch_array($res_contact_no);
+      $f_seq = $row_contact_no['f_seq'];
+      $m_seq = $row_contact_no['m_seq'];
+      $g_seq = $row_contact_no['g_seq'];
+
+      $father_email = $row_contact_no['f_email'];
+      $mother_email = $row_contact_no['m_email'];
+      $gaurdian_email = $row_contact_no['g_email'];
+
+      $f_contact_no = $row_contact_no['f_contact_no'];
+      $m_contact_no = $row_contact_no['m_contact_no'];
+      $g_contact_no = $row_contact_no['g_contact_no'];
+
+    $mail="";
+    if($father_email != "")
+    {
+      $mail = $father_email;
+    }
+    else if($mother_email != "")
+    {
+      $mail = $mother_email;
+    }
+    else if($gaurdian_email != "")
+    {
+      $mail = $gaurdian_email;
+    }
+
+    $replacements = array();
+    $replacements['%mail_from%'] = SCHOOL_EMAIL;;
+    //$replacements['%mail_to%'] = $mail;
+    $replacements['%mail_subject%'] = "Assignment uploaded for $class_name $section_name ";
+    $replacements['%mail_subject%'] = "Assignment uploaded for $class_name $section_name ";
+    $replacements['%mail_content_type%'] = 'text/html; charset=utf-8';
+
+    $template = "A new assignment has been uploaded for {$class_name} {$section_name}. <br><br>Please check \"Assignments\" module on ".SCHOOL_LOGIN_SITE."<br><br>Best Regards, <br>".SCHOOL_FROM_NAME;
+
+    if($father_email != "")
+    {
+      array_push($mailArr, $father_email);
+      $replacements['%mail_to%'] = $father_email;
+      sendmail($replacements,$template);
+    }
+
+    if($mother_email != "" && !in_array($mother_email, $mailArr))
+    {
+      array_push($mailArr, $mother_email);
+      $replacements['%mail_to%'] = $mother_email;
+      sendmail($replacements,$template);
+    }
+
+    if($gaurdian_email != "" && !in_array($gaurdian_email, $mailArr))
+    {
+      array_push($mailArr, $gaurdian_email);
+      $replacements['%mail_to%'] = $gaurdian_email;
+      sendmail($replacements,$template);
+    }
+
+    $i++;
+  }
+}
+
+function send_message($selected_parent_arr,$class_name,$section_seq)
+{
+  $seq = get_context('seq');
+  $link = mySqlConnect('MASTER');
+
+    if($section_seq != 0)
+    {
+      $section_name = ucwords(getSectionName($section_seq));
+    }
+    else
+    {
+      $section_name = "";
+    }
+
+    $class_name = strtoupper($class_name);
+    foreach($selected_parent_arr as $key=>$value)
+    {
+      $p_seq = getStudentFatherMotherGaurdianSeq($value);
+      $f_seq = $p_seq[0];
+      $m_seq = $p_seq[1];
+      $g_seq = $p_seq[2];
+
+      $msg_sub = "Assignment uploaded for $class_name $section_name ";
+      $msg_text = "A new assignment has been uploaded for {$class_name} {$section_name}. Please check \"Assignments\" module on ".SCHOOL_LOGIN_SITE." - ".SCHOOL_FROM_NAME;
+
+      if($f_seq != 0)
+      {
+        sendSocialMessage($f_seq, $seq, $msg_sub, $msg_text);
+      }
+      if($m_seq != 0)
+      {
+        sendSocialMessage($m_seq, $seq, $msg_sub, $msg_text);
+      }
+      if($g_seq != 0)
+      {
+        sendSocialMessage($g_seq, $seq, $msg_sub, $msg_text);
+      }
+    }
+}
+
+function receiver_list()
+{
+  $link = mySqlConnect("SLAVE");
+  $seq = get_context('seq');
+
+    $selected_parent_arr = array();
+    $selected_stud_arr = array();
+    $board_seq = $_POST['board_seq'];
+    $stream_seq = $_POST['stream_seq'];
+    $std_seq = $_POST['std_seq'];
+    $section_seq = $_POST['section_seq'];
+    $selected_option = $_POST['selected_option'];
+
+    //$board_name = strtoupper(getBoardName($board_seq));
+//    $stream_name = ucwords(getStreamName($stream_seq));
+//    $section_name = ucwords(getSectionName($section_seq));
+      $board_name = '';
+      $stream_name = '';
+      $section_name = '';
+
+    $class_name = getStandardName($std_seq);
+
+    $board_seq = mysql_real_escape_string($board_seq, $link);
+    $stream_seq = mysql_real_escape_string($stream_seq, $link);
+    $class_name = mysql_real_escape_string($class_name, $link);
+    $section_seq = mysql_real_escape_string($section_seq, $link);
+    $currentAcademicYear = mysql_real_escape_string(getCurrentSessionYrStr(), $link);
+    $select_stud = "MYSQL QUERY" ;
+     
+    $res_student = mysql_query($select_stud,$link);
+
+    while($row_student = mysql_fetch_array($res_student))
+    {
+      $s_seq = $row_student['seq'];
+      $parent_seq = getStudentParent($s_seq);
+      $board_name = $row_student['board_name'];
+      $stream_name = $row_student['stream_name'];
+      $section_name = $row_student['section_name'];
+
+      if(!in_array($s_seq,$selected_stud_arr))
+      {
+        array_push($selected_stud_arr,$s_seq);
+        array_push($selected_parent_arr,$parent_seq);
+      }
+    }
+
+    $full_class_str = $board_name.", ".$stream_name.", ".$class_name;
+    if($section_seq != 0)
+    {
+      $full_class_str = $full_class_str.", ".$section_name;
+    }
+    echo '
+         <input type="button" onclick="processPopup();return false;" name="send_sms" id="send_sms" value="Approve and Send Notification(s)" class="button_2"><br><br>';
+
+    echo '
+       <table width="" border="0" cellpadding="4" cellspacing="1" bgcolor="#c6c6c6">';
+    echo '
+            <tr>
+              <td width="30" bgcolor="#eeeeee" class="labletext_11"><input type="checkbox" name="check_all_user" onclick="processCheck_all_user();" id="check_all_user" checked></td>
+              <td width="113" bgcolor="#eeeeee" class="labletext_11">Class/Section</td>
+              <td width="113" bgcolor="#eeeeee" class="labletext_11">Student Name</td>
+              <td width="113" bgcolor="#eeeeee" class="labletext_11">Father Name</td>
+              <td width="113" bgcolor="#eeeeee" class="labletext_11">Mother Name</td>';
+    if(in_array("S",$selected_option))
+    {
+      echo '
+                <td width="126" bgcolor="#eeeeee" class="labletext_11">Father Contact No.</td>
+                <td width="126" bgcolor="#eeeeee" class="labletext_11">Mother Contact No.</td>';
+    }
+    if(in_array("E",$selected_option))
+    {
+      echo '
+                 <td width="123" bgcolor="#eeeeee" class="labletext_11">Father Email</td>
+                <td width="123" bgcolor="#eeeeee" class="labletext_11">Mother Email</td>';
+    }
+    echo '
+            </tr>';
+
+    $arr_count = count($selected_parent_arr);
+    $i=0;
+    foreach($selected_parent_arr as $key=>$value)
+    {
+      $student_seq = $selected_stud_arr[$i];
+      //$student_name = ucwords(getStudentName($student_seq));
+      $getStudDetails = "MYSQL QUERY";
+      $resStudData = mysqlQuery($link, $getStudDetails, $student_seq);
+      $rowStudData = mysql_fetch_array($resStudData);
+      $student_name = $rowStudData['fname']." ".$rowStudData['mname']." ".$rowStudData['lname'];
+      $stud_contact_no = $rowStudData['contact_no'];
+      $stud_email = $rowStudData['email'];
+      //$p_seq = getStudentFatherMotherGaurdianSeq($value);
+//      $f_seq = $p_seq[0];
+//      $m_seq = $p_seq[1];
+//      $g_seq = $p_seq[2];
+
+      //    $stud_name=ucwords(getStudentName($value));
+      $value = $value;
+      $get_contact_no = "MYSQL QUERY";
+      $res_contact_no = mysqlQuery($link, $get_contact_no, $value);
+      $row_contact_no = mysql_fetch_array($res_contact_no);
+      $f_seq = $row_contact_no['f_seq'];
+      $m_seq = $row_contact_no['m_seq'];
+      $g_seq = $row_contact_no['g_seq'];
+
+      $father_email = $row_contact_no['f_email'];
+      $mother_email = $row_contact_no['m_email'];
+      $gaurdian_email = $row_contact_no['g_email'];
+
+      $f_contact_no = $row_contact_no['f_contact_no'];
+      $m_contact_no = $row_contact_no['m_contact_no'];
+      $g_contact_no = $row_contact_no['g_contact_no'];
+
+      $f_fname = $row_contact_no['f_fname'];
+      $f_lname = $row_contact_no['f_lname'];
+      $m_fname = $row_contact_no['m_fname'];
+      $m_lname = $row_contact_no['m_lname'];
+      $g_fname = $row_contact_no['g_fname'];
+      $g_lname = $row_contact_no['g_lname'];
+//      $father_contact_no = "";
+//      $mother_contact_no = "";
+//      if($f_contact_no != "")
+//      {
+//         $father_contact_no = $f_contact_no;
+//      }
+//
+//      if($m_contact_no != "")
+//      {
+//         $mother_contact_no = $m_contact_no;
+//      }
+      $contact_no = "";
+      $parent_name = "";
+      if($f_fname != "")
+      {
+        $parent_name = "{$f_fname} {$f_lname}";
+      }
+      else if($m_fname != "")
+      {
+        $parent_name = "{$m_fname} {$m_lname}";
+      }
+      else if($g_fname != "")
+      {
+        $parent_name = "{$g_fname} {$g_lname}";
+      }
+      $f_name = "{$f_fname} {$f_lname}";
+      $m_name = "{$m_fname} {$m_lname}";
+      $g_name = "{$g_fname} {$g_lname}";
+
+      if($f_contact_no != "")
+      {
+        $contact_no = $f_contact_no;
+      }
+      else if($m_contact_no != "")
+      {
+        $contact_no = $m_contact_no;
+      }
+      else if($g_contact_no != "")
+      {
+        $contact_no = $g_contact_no;
+      }
+
+//      $father_email = getFatherEmail($f_seq);
+//      $mother_email = getMotherEmail($m_seq);
+//      $gaurdian_email = getGaurdianEmail($g_seq);
+      $mail = "";
+      if($father_email != "")
+      {
+        $mail = $father_email;
+      }
+      else if($mother_email != "")
+      {
+        $mail = $father_email;
+      }
+      else if($gaurdian_email != "")
+      {
+        $mail = $gaurdian_email;
+      }
+
+      echo '
+            <tr>
+               <td valign="top" bgcolor="#FFFFFF" class="searchtext_11">
+                <input type="checkbox" name="check_user" id="check_user'.$i.'" value="'.$value.'" checked>
+                <input type="hidden" name="check_stud" id="check_stud'.$i.'" value="'.$student_seq.'">
+               </td>
+               <td valign="top" bgcolor="#FFFFFF" class="searchtext_11">'.$full_class_str.'</td>
+               <td valign="top" bgcolor="#FFFFFF" class="searchtext_11">'.$student_name.'</td>
+               <td valign="top" bgcolor="#FFFFFF" class="searchtext_11">'.$f_name.'</td>
+               <td valign="top" bgcolor="#FFFFFF" class="searchtext_11">'.$m_name.'</td>';
+      if(in_array("S",$selected_option))
+      {
+        $s_bgColor = ($stud_contact_no == "")?"#FF0000":"#FFFFFF";
+        $f_bgColor = ($f_contact_no == "")?"#FF0000":"#FFFFFF";
+        $m_bgColor = ($m_contact_no == "")?"#FF0000":"#FFFFFF";
+        echo "
+        <td valign=top bgcolor={$f_bgColor} class=searchtext_11>{$f_contact_no}</td>
+        <td valign=top bgcolor={$m_bgColor} class=searchtext_11>{$m_contact_no}</td>";
+      }
+      if(in_array("E",$selected_option))
+      {
+        $s_bgColor = ($stud_email == "")?"#FF0000":"#FFFFFF";
+        $f_bgColor = ($father_email == "")?"#FF0000":"#FFFFFF";
+        $m_bgColor = ($mother_email == "")?"#FF0000":"#FFFFFF";
+        echo "
+        <td valign=top bgcolor={$f_bgColor} class=searchtext_11>{$father_email}</td>
+        <td valign=top bgcolor={$m_bgColor} class=searchtext_11>{$mother_email}</td>";
+      }
+      echo "
+            </tr>";
+      $i++;
+    }
+
+    if($arr_count == 0)
+    {
+      echo '
+            <tr>
+               <td valign="top" colspan="11" bgcolor="#FFFFFF" class="searchtext_11">Record Not Found</td>
+            </tr>';
+    }
+
+    echo '
+            <tr>
+               <td valign="top" colspan="11" bgcolor="#FFFFFF" class="searchtext_11">
+                  <input type="button" onclick="processPopup();return false;" name="send_sms" id="send_sms" value="Approve and Send Notification(s)" class="button_2">
+               </td>
+            </tr>';
+}
+
+function send_forApproval(&$error = '')
+{
+  $seq = get_context('seq');
+  $link = mySqlConnect('MASTER');
+
+  $retVal = 0;
+  $isEdit = (isset($_POST['isEdit']))?$_POST['isEdit']:0;
+  $assSeq = (isset($_POST['assSeq']))?$_POST['assSeq']:'';
+  $prevAttachmentLink = (isset($_POST['prevAttachmentLink']))?$_POST['prevAttachmentLink']:'';
+  $ret=upload_attachment_files($error, get_context('seq'));
+  if($error != '')
+  {
+    return false;
+  }
+
+  if(count($ret) > 0)
+  $ret_str = implode("|",$ret);
+  else
+  $ret_str = '';
+
+  $board_seq = mysql_real_escape_string($_POST['board'], $link);
+  $stream_seq = mysql_real_escape_string($_POST['stream'], $link);
+  $std_seq = mysql_real_escape_string($_POST['standard'], $link);
+  $section_seq = mysql_real_escape_string($_POST['section'], $link);
+  $subject_seq = mysql_real_escape_string($_POST['subject'], $link);
+  $sub = mysql_real_escape_string(ucfirst($_POST['sub']), $link);
+  $message = mysql_real_escape_string($_POST['message'], $link);
+  $sender_seq = mysql_real_escape_string($_POST['sender_seq'], $link);
+  $due_date = mysql_real_escape_string(date("Y-m-d",strtotime($_POST['datepicker'])), $link);
+
+  if($isEdit)
+  {
+     if($ret_str != '' && $prevAttachmentLink != '')
+     {
+       $ret_str = $prevAttachmentLink.'|'.$ret_str;
+     }
+     else if($prevAttachmentLink != '')
+     {
+       $ret_str = $prevAttachmentLink;
+     }
+
+      $query = "MYSQL QUERY";
+      $res = mysqlQuery($link,$query,$sender_seq,$board_seq,$stream_seq,$std_seq,$section_seq,$subject_seq,$sub,$message,$due_date,
+             $ret_str, $assSeq);
+  }
+  else
+  {
+      $query = "MYSQL QUERY";
+      $res = mysqlQuery($link,$query,$sender_seq,$board_seq,$stream_seq,$std_seq,$section_seq,$subject_seq,$sub,$message,$due_date,$ret_str);
+  }
+
+   if($res)
+   {
+      $retVal = 'SUCCESS';
+   }
+  $assignment_rec_seq = mysql_insert_id($link);
+
+  /*$update_query = "UPDATE assignment_rec SET attachment_link='$ret_str' WHERE assignment_rec_seq='$assignment_rec_seq'";
+  $res_update = mysql_query($update_query,$link);*/
+  notifyAssignmentForApproval();
+  return $retVal ;
+}
+
+function notifyAssignmentForApproval()
+{ //roles in admin_rec will be honored, and max 10 SMSes will be sent
+  //admin_rec table has been merged in teacher_rec so use teacher_rec instead of admin_rec
+  global $ASSIGNMENT_NOTIFY_TO_ARR;
+  if(!isset($ASSIGNMENT_NOTIFY_TO_ARR) || empty($ASSIGNMENT_NOTIFY_TO_ARR)) return;
+
+  $rl = implode("','", $ASSIGNMENT_NOTIFY_TO_ARR);
+  $rl = "'{$rl}'";
+
+  $query = "MYSQL QUERY";
+  $link = mySqlConnect('SLAVE');
+  $res = mysqlQuery($link,$query);
+  if($res)
+  {
+    $sender = get_context('fname');
+    $smsInfo = array();
+    $smsInfo['sms_rec_seq'] = 0;
+    $smsInfo['sms_text'] = 'A new assignment has been uploaded for approval by '.ucfirst($sender);
+    while($row = mysql_fetch_array($res))
+    {
+      $smsInfo['phone'] = $row[0];
+      sendSms($smsInfo);
+    }
+  }
+}
+
+function removeAttachment()
+{
+  $link = mySqlConnect('MASTER');
+  $retVal = '';
+  $assignment_rec_seq = mysql_real_escape_string($_POST['assignment_rec_seq'], $link);
+  $attachment_link = $_POST['attachment_link'];
+  $aLink1 = $_POST['aLink'];
+  $newAttachmentArr = array();
+  if($attachment_link != "")
+  {
+    $attachmentArr = explode('|', $attachment_link);
+
+    foreach($attachmentArr as $aLink)
+    {
+      if($aLink != $aLink1)
+      {
+        array_push($newAttachmentArr, $aLink);
+      }
+    }
+
+    $newAttachmentLink = mysql_real_escape_string(implode("|",$newAttachmentArr), $link);
+    $update_query = "MYSQL QUERY";
+    $res_query = mysql_query($update_query, $link);
+    if($res_query)
+    {
+       $retVal = 'SUCCESS';
+    }
+
+  }
+  return $retVal;
+}
+
+function smsToTeacher()
+{
+   $retVal = '';
+   $link = mySqlConnect("MASTER");
+   $seq = get_context('seq');
+   $sms_text = $_POST['sms_text'];
+   $smsReceiverSeq = $_POST['senderSeq'];
+
+   if($sms_text == '')
+   {
+     echo "ERROR:Please enter sms text.";
+     return;
+   }
+   else
+   {
+      $sms_schedule_option = 'R';
+      $send_time = '';
+      $role = getUserRole($seq);
+      $receiverRole = getUserRole($smsReceiverSeq);
+      $receiver_info = $receiverRole.'_'.$smsReceiverSeq; //Role_userSeq
+      $senderName = ($role == TEACHER_ROLE)?getTeacherName($seq):getAdminName($seq);
+
+       $smsInfo = array();
+
+       $getContactNo = "MYSQL QUERY";
+
+         $resContactNo = mysqlQuery($link, $getContactNo, $smsReceiverSeq);
+         $rowContactNo = mysql_fetch_array($resContactNo);
+         $contact_no = $rowContactNo['contact_no'];
+
+          if($contact_no != '')
+          {
+             $insert_sms_rec = "MYSQL QUERY";
+             $res_sms_rec = mysqlQuery($link, $insert_sms_rec, $sms_text, $seq, $receiver_info, $sms_schedule_option, $send_time);
+             $sms_rec_seq = mysql_insert_id($link);
+
+             $smsInfo['sms_rec_seq'] = $sms_rec_seq;
+             $smsInfo['sms_text'] = $sms_text." - ".$senderName;
+             $smsInfo['sms_schedule_option'] = $sms_schedule_option;
+             $smsInfo['send_time'] = $sent_time;
+
+             $smsInfo['phone']=$contact_no;
+             sendSms($smsInfo);
+             $retVal = 'SUCCESS';
+         }
+         else
+         {
+           echo "ERROR:Contact number is not available.";
+           return;
+         }
+        return $retVal;
+   }
+
+}
+
+function saveAppAss(&$error = '')
+{
+  
+  $retVal = '';
+  $seq = get_context('seq');
+  $role = getUserRole($seq);
+
+  $link = mySqlConnect('MASTER');
+
+  $ret = upload_attachment_files($error, get_context('seq'));
+    if($error != '')
+    {
+      return false;
+    }
+
+    $board_seq = mysql_real_escape_string($_POST['board'], $link);
+    $stream_seq = mysql_real_escape_string($_POST['stream'], $link);
+    $std_seq = mysql_real_escape_string($_POST['class'], $link);
+    $section_seq = mysql_real_escape_string($_POST['section'], $link);
+    $subject_seq = mysql_real_escape_string($_POST['subject'], $link);
+    $sub = mysql_real_escape_string(ucfirst($_POST['heading']), $link);
+    $message = mysql_real_escape_string($_POST['message'], $link);
+    $sender_seq = mysql_real_escape_string($seq, $link);
+    $due_date = mysql_real_escape_string(date("Y-m-d",strtotime($_POST['due_date'])), $link);
+    $approval_status = ((!isPagePermitted("assignment-approved",$role)))? "P" : "A"; 
+    //$selected_option = (isset($_POST['checked_option']))?$_POST['checked_option']:array();
+    $approved_by = ((!isPagePermitted("assignment-approved",$role)))? '' : $seq;
+    $assigmnemt_seq = $_POST['assigmnemt_seq'];
+    if($assigmnemt_seq == 'undefined')
+    {
+       if(count($ret) > 0)
+        $ret_str = implode("|",$ret);
+        else
+        $ret_str = '';
+        
+        
+       $query = "MYSQL QUERY";
+    }
+    else if((isPagePermitted("assignment-approved",$role)) && ($assigmnemt_seq != 'undefined' || $assigmnemt_seq != '' || $assigmnemt_seq > 0) )
+    {
+       $sender_seq = $_POST['senderSeq'];
+      
+        $get_attachment = "MYSQL QUERY ";
+        $res_attachment = mysql_query($get_attachment, $link);
+        $row_attachment = mysql_fetch_array($res_attachment);
+        $a_link = $row_attachment['attachment_link'];
+        $a_link_arr = explode("|",$a_link);
+        $result = array_merge($a_link_arr, $ret);
+         if(count($result) > 0)
+         $result_str = implode("|",$result);
+         else
+         $result_str = '';
+      
+       $query = "MYSQL QUERY ";
+    } 
+   
+    $res = mysql_query($query,$link);
+     
+    if($res)
+    {
+       $retVal = 'SUCCESS';
+       if((isPagePermitted("assignment-approved",$role)) && !$isCancelAss)
+       {
+          sendAppSmsEmail($board_seq, $stream_seq, $std_seq, $section_seq);
+       }
+    }
+    return $retVal;
+}    
+
+function sendAppSmsEmail($board_seq, $stream_seq, $class_seq, $section_seq, $sendSms = 1, $sendEmail = 1)
+{
+  $link = mySqlConnect('MASTER');
+  $seq = get_context('seq');
+  $table = '';
+	$clause = '';
+  $paramArr = array();
+	if($board_seq != 0)
+	{
+		$paramArr[] = $board_seq;
+    $clause .= " s.board = '?' AND ";
+	}
+	if($stream_seq != 0)
+	{
+		$paramArr[] = $stream_seq;
+    $clause .= " s.stream = '?' AND";
+	}
+	if($class_seq != 0)
+	{
+		$paramArr[] = $class_seq;
+    }
+  
+  $query = "MYSQL QUERY";
+       
+  $res = mysqlQuery($link, $query, $paramArr);  
+  
+  $contactArr = array();
+  while($row = mysql_fetch_array($res))
+	{
+			$class_name = $row['class_name'];
+      $section_name = $row['section_name'];
+      $parent_seq = $row['parent_seq'];
+      $s_email = $row['email'];
+      $father_email = $row['f_email'];
+      $mother_email = $row['m_email'];
+      $gaurdian_email = $row['g_email'];
+
+      $s_contact_no = $row['contact_no'];
+      $f_contact_no = $row['f_contact_no'];
+      $m_contact_no = $row['m_contact_no'];
+      $g_contact_no = $row['g_contact_no'];
+    if($sendSms)
+    {
+      $receiver_info = "P_".$parent_seq; //P=>Parent & $parent_seq=> Parent seq.
+      $sms_text = "A new assignment has been uploaded for {$class_name} {$section_name}. Please check \"Assignments\" module on School portal - ".SCHOOL_FROM_NAME;
+      $sms_schedule_option = "R";
+      $sent_time = "";
+      $sms_text = mysql_real_escape_string($sms_text, $link);
+      $seq = mysql_real_escape_string($seq, $link);
+      $receiver_info = mysql_real_escape_string($receiver_info, $link);
+      $sms_schedule_option = mysql_real_escape_string($sms_schedule_option, $link);
+      $insert_sms_rec = "MYSQL QUERY";
+      $res_sms_rec = mysql_query($insert_sms_rec,$link);
+      $sms_rec_seq = mysql_insert_id($link);
+
+      $smsInfo = array();
+      $smsInfo['sms_rec_seq'] = $sms_rec_seq;
+      $smsInfo['sms_text'] = $sms_text;
+      $smsInfo['sms_schedule_option'] = $sms_schedule_option;
+      //$smsInfo['phone'] = $contact_no;
+
+      if($s_contact_no != "" && !in_array($s_contact_no, $contactArr))
+      {
+        array_push($contactArr, $s_contact_no);
+        $smsInfo['phone'] = $s_contact_no;
+        sendSms($smsInfo);
+      }
+      
+      if($f_contact_no != "" && !in_array($f_contact_no, $contactArr))
+      {
+        array_push($contactArr, $f_contact_no);
+        $smsInfo['phone'] = $f_contact_no;
+        sendSms($smsInfo);
+      }
+
+      if($m_contact_no != "" && !in_array($m_contact_no, $contactArr))
+      {
+        array_push($contactArr, $m_contact_no);
+        $smsInfo['phone'] = $m_contact_no;
+        sendSms($smsInfo);
+      }
+      
+      if($g_contact_no != "" && !in_array($g_contact_no, $contactArr))
+      {
+        array_push($contactArr, $g_contact_no);
+        $smsInfo['phone'] = $g_contact_no;
+        sendSms($smsInfo);
+      }
+   }
+   
+   if($sendEmail)
+   {   
+      $replacements = array();
+      $replacements['%mail_from%'] = SCHOOL_EMAIL;;
+      //$replacements['%mail_to%'] = $mail;
+      $replacements['%mail_subject%'] = "Assignment uploaded for $class_name $section_name ";
+      $replacements['%mail_subject%'] = "Assignment uploaded for $class_name $section_name ";
+      $replacements['%mail_content_type%'] = 'text/html; charset=utf-8';
+  
+      $template = "A new assignment has been uploaded for {$class_name} {$section_name}. <br><br>Please check \"Assignments\" module on ".SCHOOL_LOGIN_SITE."<br><br>Best Regards, <br>".SCHOOL_FROM_NAME;
+  
+      if($father_email != "")
+      {
+        array_push($mailArr, $father_email);
+        $replacements['%mail_to%'] = $father_email;
+        sendmail($replacements,$template);
+      }
+  
+      if($mother_email != "" && !in_array($mother_email, $mailArr))
+      {
+        array_push($mailArr, $mother_email);
+        $replacements['%mail_to%'] = $mother_email;
+        sendmail($replacements,$template);
+      }
+  
+      if($gaurdian_email != "" && !in_array($gaurdian_email, $mailArr))
+      {
+        array_push($mailArr, $gaurdian_email);
+        $replacements['%mail_to%'] = $gaurdian_email;
+        sendmail($replacements,$template);
+      }
+    } 
+	}    
+}
+
+?>

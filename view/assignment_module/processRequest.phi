@@ -1,0 +1,136 @@
+<?php
+
+include_once '../view/assignment/helper.phi';
+//error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
+if(isset($_POST['cmd']))
+{
+  if($_POST['cmd']=="add_section")
+  {
+    $getVal = appendSection();
+    echo $getVal;
+    return;
+  }
+  if($_POST['cmd']=="add_subject")
+  {
+    //error_log(print_r($_POST,1));
+    $standard = $_POST['std'];
+    $board_seq = $_POST['board_seq'];
+    $stream_seq = $_POST['stream_seq'];
+    $subject_seq = $_POST['subject_seq'];
+    $getVal=appendSubject($standard,$board_seq,$stream_seq,$subject_seq);
+    echo $getVal;
+    return;
+  }
+  if($_POST['cmd']=="display_list_popup")
+  {
+    $getVal = receiver_list();
+    echo $getVal;
+    return;
+  }
+  if($_POST['cmd']=="cancelAssignment")
+  {
+    cancelAssignment();
+    echo 'Assignment Deleted';
+    return;
+  }
+  if($_POST['cmd'] == "removeAttachment")
+  {
+    $getVal = removeAttachment();
+    echo $getVal;
+    return;
+  }
+
+  if($_POST['cmd'] == "smsToTeacher")
+  {
+    $getVal = smsToTeacher();
+    echo $getVal;
+    return;
+  }
+  
+  if($_POST['cmd'] == "saveAppAss")
+  {
+    $getVal = saveAppAss();
+    if($getVal == 'SUCCESS')
+    {
+      $seq = get_context('seq'); 
+      $role = getUserRole($seq);
+      echo "<script type=\"text/javascript\" src=\"//mobile_app/general_app_code/pages/assignmen.js?ver=0\"></script>\n";
+      if((!isPagePermitted("assignment-approved",$role)))
+      {
+        echo "<script> alert(' Thank you. Assignment has been uploaded for approval by Principal.');
+        </script>";
+      }
+      else
+      {
+         echo "<script> alert(' Thank you. Assignment has been uploaded.');
+        </script>";
+      }  
+    }
+    return;
+  }
+
+}
+else if( isset($_POST['board']) && isset($_POST['formName']) && $_POST['formName']=='approvedForm')
+{
+  $text="";
+  $getVal = send_assignment($err);
+
+  if($err == '')
+  {
+    $message = '';
+    if (in_array("S", $getVal))
+    {
+      $message="SMSs";
+    }
+
+    if (in_array("E", $getVal))
+    {
+      $message = ($message != '')?$message.", Emails":" Emails";
+    }
+
+    if (in_array("M", $getVal))
+    {
+      $message = ($message != '')?$message.", Messages":" Messages";
+    }
+    if(count($getVal)>0)
+    {
+      $text=trim($message,',')." have been sent to the selected users.";
+    }
+    $rand = rand(0,99999);
+    echo "<script> alert(' Thank you. Assignment has been uploaded. $text');
+   			window.top.location='/my/sent_assignments?rand=$rand';
+   	</script>";
+  }
+  else
+  {
+    echo "<script> alert('$err');	</script>";
+  }
+}
+else if( isset($_POST['board']) && isset($_POST['formName']) && $_POST['formName'] == 'approvalForm')
+{
+  $text="";
+  $getVal = send_forApproval($err);
+
+  if($err == '')
+  {
+    $rand = rand(0,99999);
+    if($getVal == 'SUCCESS')
+    {
+      echo "<script> alert(' Thank you. Assignment has been uploaded for approval by Principal.');
+        window.top.location='/my/sent_assignments?rand=$rand';
+      </script>";
+    }
+    else
+    {
+        echo "<script> alert('Assignment not uploaded'); </script>";
+    }
+  }
+  else
+  {
+    echo "<script> alert('$err'); </script>";
+  }
+}
+
+
+
+?>

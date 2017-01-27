@@ -1,0 +1,4 @@
+<?php
+//fix for safari file upload problems
+header("connection: close");
+?>

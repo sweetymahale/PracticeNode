@@ -1,0 +1,113 @@
+
+.web_text_red_s13{
+  font-family:Geneva, Arial, Helvetica, sans-serif;
+  font-size:13px;
+  color:#FF0000;
+  font-weight:bold;
+  }
+
+a:link {
+  color: #396EA4;
+  text-decoration: none;
+}
+a:visited {
+  text-decoration: none;
+  color: #396EA4;
+}
+a:hover {
+  text-decoration: none;
+  color: #FF9900;
+}
+a:active {
+  text-decoration: none;
+}
+
+/*!!!!!!!!!!assignment iiiiiiiiiiiiiiiiiiiiiiiiiii*/
+#main_assignment_display{
+  width:835px;
+  float:left;
+  margin-left:10px;
+  margin-bottom:10px;
+  margin-top:15px;
+  }
+
+#main_assignment_display_1{
+  width:835px;
+  float:left;
+  margin-left:10px;
+  margin-bottom:10px;
+  }
+
+#main_assignment_frominfo{
+  width:835px;
+  float:left;
+  margin-left:10px;
+  margin-bottom:10px;
+  margin-top:15px;
+  padding-top:10px;
+  background:#EAFBFF;
+  }
+
+#assignment_preview{
+  width:815px;
+  margin-left:10px;
+  height:100%;
+  float:left;
+  border:solid 1px #a6bed6;
+  margin-top:10px;
+  margin-bottom:10px;
+  padding:10px;
+  }
+
+#assignment_preview_attchfile{
+  width:815px;
+  margin-left:10px;
+  height:100%;
+  float:left;
+  margin-bottom:10px;
+  }
+
+#assignment_preview_b_status{
+  width:815px;
+  margin-left:10px;
+  height:100%;
+  float:left;
+  margin-bottom:25px;
+  }
+
+.button_1_big{
+  background:#396EA4;
+  border:solid 1px #7DA8D2;
+  width:210px;
+  padding-top:2px;
+  padding-bottom:2px;
+  color:#FFFFFF;
+  font-family:Geneva, Arial, Helvetica, sans-serif;
+  font-weight:bold;
+  font-size:12px;
+  }
+
+  .button_2_big{
+  background:#396EA4;
+  border:solid 1px #7DA8D2;
+  width:225px;
+  padding-top:2px;
+  padding-bottom:2px;
+  color:#FFFFFF;
+  font-family:Geneva, Arial, Helvetica, sans-serif;
+  font-weight:bold;
+  font-size:12px;
+  }
+
+  .button_2{
+  background:#396EA4;
+  border:solid 1px #7DA8D2;
+  width:205px;
+  padding-top:2px;
+  padding-bottom:2px;
+  color:#FFFFFF;
+  font-family:Geneva, Arial, Helvetica, sans-serif;
+  font-weight:bold;
+  font-size:12px;
+  }
+

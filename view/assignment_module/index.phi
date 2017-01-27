@@ -1,0 +1,11 @@
+<?php
+
+/**
+  * Changing the title of the page. Fix for bug 101.
+  */
+set_context('title', "Tezkids - Assignment");
+
+$includes = array('./header.phi',
+                  './assignment/content.phi',
+                  './footer.phi');
+?>
